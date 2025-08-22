@@ -1,0 +1,257 @@
+
+Catalogue Portal — Production Action Items Checklist
+(Stacks: Google Sheets + Apps Script (JSON/JSONP) + Static Frontend on GitHub Pages; No roles, no auth, no analytics; Canonical filter-in-URL; Single-column mobile-first UI)
+
+Assumptions & Constraints
+- Data source: Google Sheets only (Master → Public mirror). You have:
+  • Master sheet: "Catalog_Master_Sheet"
+  • Public sheet: "Catalog_Public_Sheet"
+- Column order (both sheets): sNo, sku, title, category, subCategory, brand, price, mrp, inStock, imageUrl, colorOptions, tags, priority, notes
+- No roles, no authentication, no analytics.
+- Canonical links only (no short links); filters are encoded in URL and prefilled on open.
+- WhatsApp share via wa.me intent (no WhatsApp Business Cloud API).
+- Optional client-side PDF export only (no server).
+- Single-column mobile-first UI (one product card per row).
+
+————————————————————————————————————————
+1) Google Sheets: Structure & Hygiene
+————————————————————————————————————————
+1.1 Create/confirm sheets
+  - Ensure two sheets exist in the same spreadsheet:
+    • Catalog_Master_Sheet (editable master)
+    • Catalog_Public_Sheet (read-only public view)
+  - Freeze header row; freeze column A if sNo should stay visible in Master.
+
+1.2 Columns & types (exact, left→right)
+  - sNo (Number; serial index; optional auto: =ROW()-1 if header is row1)
+  - sku (Text; unique, no spaces preferred)
+  - title (Text; short descriptive name)
+  - category (Text)
+  - subCategory (Text; NEW requirement)
+  - brand (Text)
+  - price (Number)
+  - mrp (Number)
+  - inStock (Boolean: TRUE/FALSE or 1/0)
+  - imageUrl (Text; full https URL reachable publicly)
+  - colorOptions (Text; comma-separated list, e.g., Black,Blue,Red)
+  - tags (Text; comma-separated keywords, e.g., polyester,school)
+  - priority (Number; higher shows earlier when sorting by priority)
+  - notes (Text; optional internal/public note)
+
+1.3 Data validation & formatting
+  - inStock: Data validation (Checkbox or List: TRUE,FALSE). If using 1/0: add validation for 1 or 0.
+  - price/mrp/priority: Number; set to non-negative; optional currency formatting for view only.
+  - imageUrl: ensure all linked images are publicly viewable.
+  - colorOptions & tags: consistent casing; separate by commas (no trailing spaces).
+
+1.4 Public mirror
+  - In Catalog_Public_Sheet, mirror only allowed columns/rows from Master:
+    • Use either =ARRAYFORMULA or =QUERY to copy rows that you want public.
+    • Example (simple mirror starting at A1):
+      =ARRAYFORMULA(Catalog_Master_Sheet!A1:N)
+    • Optional: Filter out rows that are not ready for public by marking a “publish” flag in Master (if added later).
+
+1.5 Sample data
+  - Add at least 10 rows covering multiple categories, subCategories, brands, colors, and mixed inStock values.
+  - Sanity-check image URLs load directly in a browser tab.
+
+1.6 Optional: Settings sheet (for versioning)
+  - Create a sheet “Settings”, put version in B2 (e.g., 2025-08-22T11:00:00Z). Update on major data changes.
+
+————————————————————————————————————————
+2) Publish Endpoints (Frontend Data)
+————————————————————————————————————————
+2.1 Publish CSV (primary, simplest)
+  - File → Share → Publish to the web → Link → Comma-separated values (.csv) and select Catalog_Public_Sheet.
+  - Copy the published URL (looks like https://docs.google.com/spreadsheets/d/e/<pub-id>/pub?gid=<gid>&single=true&output=csv).
+  - This will be used by the frontend’s CSV fetcher.
+
+2.2 Apps Script Web App (JSON/JSONP) for better control
+  - Extensions → Apps Script → create a new script bound to the spreadsheet.
+  - Implement doGet() to return JSON: objects with the exact columns above (cast numbers/bools; split colorOptions/tags).
+  - Support JSONP (?callback=fn) to avoid CORS issues if direct fetch is blocked.
+  - Deploy → New deployment → Web app → Execute as Me → Who has access: Anyone → Copy Web App URL.
+  - Keep both URLs recorded for config.ts in the frontend.
+
+————————————————————————————————————————
+3) Local Dev Environment (VS Code)
+————————————————————————————————————————
+3.1 Prereqs
+  - Node.js LTS installed; npm available.
+  - VS Code installed with ESLint and Prettier (optional).
+
+3.2 Project scaffold
+  - Create Vite React + TypeScript project.
+  - Install TailwindCSS, PostCSS, Autoprefixer; initialize Tailwind.
+  - Git init; first commit.
+
+3.3 Project structure (src/)
+  - components/: Header.tsx, FiltersDrawer.tsx, ProductCard.tsx, BottomBar.tsx, FilterChips.tsx
+  - hooks/: useProducts.ts, useShortlist.ts
+  - utils/: fetchSheet.ts, urlFilters.ts, applyFilters.ts, whatsapp.ts, jsonp.ts, pdf.ts (optional)
+  - types/: product.ts, filters.ts
+  - config.ts, App.tsx, main.tsx, index.css
+
+3.4 Config placeholders
+  - config.ts should export SHEET_CSV_URL and APPS_SCRIPT_URL (string constants).
+
+————————————————————————————————————————
+4) Data Types, Parsing & Loading
+————————————————————————————————————————
+4.1 Product type definition (align with columns)
+  - { sNo:number; sku:string; title:string; category?:string; subCategory?:string; brand?:string; price:number; mrp?:number; inStock:boolean; imageUrl?:string; colors?:string[]; tags?:string[]; priority?:number; notes?:string }
+
+4.2 CSV loader
+  - Fetch published CSV URL; split headers & rows; trim; cast numbers/bools; split comma-lists (colorOptions,tags).
+  - Shape to Product objects.
+  - Handle empty lines; ignore rows with missing sku.
+
+4.3 Apps Script JSON/JSONP loader (optional fallback/primary)
+  - If fetch CORS fails, use JSONP utility that injects a <script> with ?callback=fn.
+  - Normalize payload to the same Product type.
+
+4.4 Local caching (optional but recommended)
+  - Store last dataset and a version key (from Settings!B2 or timestamp from Apps Script) in localStorage.
+  - On load, compare version; refresh if changed.
+
+————————————————————————————————————————
+5) URL-Driven Filters (Canonical Links)
+————————————————————————————————————————
+5.1 Filter parameters (URLSearchParams)
+  - category (CSV list), subCategory (CSV), brand (CSV), colors (CSV)
+  - inStock (0|1)
+  - price_gte (number), price_lte (number)
+  - search (string)
+  - Rule: arrays comma-separated, no spaces; booleans as 1 or 0.
+
+5.2 On-load behavior
+  - Parse location.search → build Filters object → prefill the Filters UI and apply to data.
+
+5.3 On-change behavior
+  - Any filter change updates URL via history.replaceState (no full reload).
+
+————————————————————————————————————————
+6) Filtering Logic
+————————————————————————————————————————
+6.1 Predicate order
+  - inStock check → category/subCategory/brand/colors checks → price range → text search (sku/title/tags).
+
+6.2 Text search
+  - Lowercase and search within: title + sku + tags (joined).
+
+6.3 Sorting (minimal, optional)
+  - Provide a simple sort dropdown: Priority (desc, default), Price ↑, Price ↓, In-stock first.
+
+————————————————————————————————————————
+7) UI: Mobile-First Single Column
+————————————————————————————————————————
+7.1 Layout
+  - Header: search field + Filters button (opens drawer).
+  - Applied filter chips row (tap to remove each).
+  - Catalogue list: mapped ProductCard components (1 per row).
+  - Bottom sticky bar: appears when ≥1 item selected → shows count + WhatsApp share + Share filter + (optional) Export PDF.
+
+7.2 Filters drawer
+  - Category (multi), subCategory (multi), Brand (multi), In Stock (toggle), Price (min/max number inputs or simple slider), Colors (chips).
+
+7.3 ProductCard
+  - Image (lazy), title, sku, brand, price, in-stock pill, “Add/Remove to shortlist” button.
+  - Optional fields displayed: category/subCategory if helpful, notes if public-safe.
+
+7.4 Accessibility & touch targets
+  - Buttons ≥44px height; focus states; keyboard navigation where possible.
+
+————————————————————————————————————————
+8) Shortlist & WhatsApp Share
+————————————————————————————————————————
+8.1 Shortlist state
+  - Maintain an array of { sku, qty?, color?, note? }.
+  - Toggle add/remove on card button. Allow editing qty/selection in a small bottom sheet if desired.
+
+8.2 Share flows
+  - Single-product share: “Interested in SKU <sku> … Link: <canonical URL w/ search=<sku>>”
+  - Multi-select share: bullet list of items + “View: <current canonical URL>”
+  - Use wa.me intent (https://wa.me/?text=ENCODED).
+
+8.3 Share current filter
+  - Anyone can share; button copies URL (and optionally triggers Web Share API if available).
+
+————————————————————————————————————————
+9) Optional: Client-Side PDF Export
+————————————————————————————————————————
+9.1 Libraries
+  - html2canvas + jsPDF (client-only).
+
+9.2 Scope
+  - Export visible items (current filter result). If long pages, warn user or restrict to first N items.
+  - Include a small QR (client-side QR lib) that points to the same canonical URL.
+
+9.3 QA
+  - Test on mobile (iOS/Android browsers). Verify fonts, image quality, and page breaks.
+
+————————————————————————————————————————
+10) Error Handling & Empty States
+————————————————————————————————————————
+10.1 Data load failures
+  - Show “Failed to load products.” with a retry button and a link to check data source.
+
+10.2 No results
+  - Friendly “No products match these filters.” with a button to clear filters.
+
+10.3 Image errors
+  - Fallback placeholder image if product image fails to load.
+
+————————————————————————————————————————
+11) Testing Checklist
+————————————————————————————————————————
+11.1 Functional
+  - Open a URL with category & subCategory prefilled → UI reflects it.
+  - Toggle In Stock → out-of-stock items disappear.
+  - Set price range → only items within bounds show.
+  - Search by SKU and by word in title/tags.
+  - Add multiple items to shortlist → bottom bar shows count.
+  - Multi-share on WhatsApp opens with correct message.
+  - Share current filter copies URL / triggers Web Share API.
+
+11.2 Data integrity
+  - CSV adds/edits in Master are visible in Public and reflect on site refresh.
+  - Apps Script JSON endpoint returns well-typed values (price numbers, inStock boolean, arrays for colors/tags).
+
+11.3 Mobile UX
+  - Single-column layout on common devices.
+  - Sticky elements behave correctly (header & bottom bar).
+  - Touch targets are easy to tap.
+
+————————————————————————————————————————
+12) Deployment (GitHub Pages)
+————————————————————————————————————————
+12.1 Repo & build
+  - Commit code to GitHub repository.
+  - Configure Vite "base" to match repo name (e.g., /catalogue-portal/).
+  - Build and deploy via gh-pages package or GitHub Actions.
+  - Add SPA fallback: copy dist/index.html to dist/404.html during build step.
+
+12.2 Post-deploy validation
+  - Visit production URL with various filter combinations; confirm the UI prefill.
+  - Test WhatsApp share links on mobile devices.
+  - Validate image loading and performance (lazy-loading).
+
+————————————————————————————————————————
+13) Operations & Maintenance
+————————————————————————————————————————
+13.1 Updating products
+  - Edit Catalog_Master_Sheet only; Public mirrors automatically.
+  - If publish-to-web caching delays updates, append a cache-buster query (e.g., ?v=timestamp) to CSV URL in config.ts or update Settings!B2 and read that as a version key in Apps Script.
+
+13.2 Data quality guardrails
+  - Add conditional formatting to highlight missing sku/title/price/imageUrl.
+  - Keep commas out of fields unless properly quoted or switch to Apps Script JSON to avoid CSV parsing edge cases.
+
+13.3 Backups & change control
+  - Periodically download a CSV backup of Master.
+  - Track Apps Script changes with versions in the Script Editor.
+
+————————————————————————————————————————
+14) Backlog (Explicitly NOT in current build)
+————————————————————————————————————————
+- Roles/auth, analytics, WhatsApp Business API, server-side PDF generation, client-specific pricing, saved filter presets on server, advanced image CDN, bulk import tools, distributor portals, etc.

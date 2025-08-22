@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catalogue Portal</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <img src="./assets/logo.svg" alt="Logo" class="logo"/>
+      <span>Catalogue Portal</span>
+    </div>
+    <div class="searchbar">
+      <input id="searchInput" type="search" placeholder="Search by title/SKU..." />
+      <button id="filtersBtn" class="btn">Filters</button>
+    </div>
+    <div id="chips" class="chips"></div>
+  </header>
+
+  <main id="catalogue" class="catalogue"></main>
+
+  <div id="bottomBar" class="bottom-bar hidden">
+    <span id="selectedCount">0 selected</span>
+    <a id="waShareLink" class="btn primary" href="#" target="_blank" rel="noopener">Share on WhatsApp</a>
+    <button id="shareFilterBtn" class="btn">Share filter</button>
+    <button id="exportPdfBtn" class="btn">Export PDF</button>
+  </div>
+
+  <!-- Filters Drawer -->
+  <dialog id="filtersDialog">
+    <form method="dialog" class="filters">
+      <h3>Filters</h3>
+
+      <label>Category</label>
+      <div id="filterCategory" class="checkbox-list"></div>
+
+      <label>Sub-Category</label>
+      <div id="filterSubCategory" class="checkbox-list"></div>
+
+      <label>Brand</label>
+      <div id="filterBrand" class="checkbox-list"></div>
+
+      <label>Colors</label>
+      <div id="filterColors" class="checkbox-list"></div>
+
+      <div class="row">
+        <label>Price Min <input type="number" id="filterPriceMin" min="0" /></label>
+        <label>Price Max <input type="number" id="filterPriceMax" min="0" /></label>
+      </div>
+      <label class="row">
+        <input type="checkbox" id="filterInStock" /> In Stock only
+      </label>
+      <menu class="actions">
+        <button id="clearFiltersBtn" type="button" class="btn">Clear</button>
+        <button id="applyFiltersBtn" value="default" class="btn primary">Apply</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="./config.js"></script>
+  <script src="./src/utils/urlFilters.js"></script>
+  <script src="./src/utils/applyFilters.js"></script>
+  <script src="./src/utils/whatsapp.js"></script>
+  <script src="./src/utils/jsonp.js"></script>
+  <script src="./src/utils/fetchSheet.js"></script>
+  <script src="./src/utils/pdf.js"></script>
+  <script src="./src/app.js"></script>
+</body>
+</html>

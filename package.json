@@ -1,0 +1,23 @@
+{
+  "name": "catalogue-portal",
+  "version": "1.0.0",
+  "description": "Stack: Pure static HTML/CSS/JS, Google Sheets (CSV) and optional Apps Script JSON/JSONP. No build tools. Host directly on GitHub Pages.",
+  "main": "config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashwinjain5/catalogue-portal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ashwinjain5/catalogue-portal/issues"
+  },
+  "homepage": "https://github.com/ashwinjain5/catalogue-portal#readme",
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
