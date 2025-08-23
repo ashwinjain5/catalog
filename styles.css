@@ -50,19 +50,37 @@ dialog { border: none; border-radius: 16px; padding: 0; width: 92vw; max-width: 
 
 
 .checkbox-list {
-  max-height: 120px;
+  max-height: 140px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 8px;
+  padding: 8px 12px;
   background: #fff;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
+
 .checkbox-list label {
-  display: block;
+  display: flex;
+  align-items: center;
   font-size: 14px;
-  padding: 4px 0;
+  padding: 6px 0;
+  cursor: pointer;
 }
+
 .checkbox-list input[type="checkbox"] {
   margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+
+
+.qty-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
 }
