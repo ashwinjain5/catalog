@@ -23,6 +23,8 @@
     filterInStock: document.getElementById("filterInStock"),
     clearFiltersBtn: document.getElementById("clearFiltersBtn"),
     applyFiltersBtn: document.getElementById("applyFiltersBtn"),
+    shortlistDrawer: document.getElementById("shortlistDrawer"),
+    shortlistList: document.getElementById("shortlistList"),
   };
 
   init();
@@ -50,6 +52,36 @@
       return payload.data;
     }
     return await fetchProductsFromCSV(SHEET_CSV_URL);
+  }
+
+  function openShortlistDrawer() {
+  renderShortlistList();
+  shortlistDrawer.showModal();
+}
+
+  function renderShortlistList() {
+    if (!state.shortlist.length) {
+      shortlistList.innerHTML = `<div>No items shortlisted yet.</div>`;
+      return;
+    }
+
+    const productMap = new Map(state.products.map(p => [p.sku, p.title]));
+    shortlistList.innerHTML = state.shortlist.map((item, i) => {
+      const title = productMap.get(item.sku) || "Unknown Product";
+      return `
+        <div class="item">
+          <span>${i + 1}. ${item.sku} - ${title}</span>
+          <button onclick="removeFromShortlist('${item.sku}')">✖</button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  window.removeFromShortlist = function(sku) {
+    state.shortlist = state.shortlist.filter(i => i.sku !== sku);
+    renderShortlistList();
+    renderBottomBar();
+    renderList(applyFilters(state.products, state.filters));
   }
 
   function uniqueNonEmpty(arr) {
@@ -125,20 +157,20 @@
     els.shareShortlistBtn = document.getElementById("shareShortlistBtn");
 
     els.shareShortlistBtn.addEventListener("click", () => {
-      if (!state.shortlist.length) return;
-
-      const skuList = state.shortlist.map(i => i.sku).join(",");
+      const skus = state.shortlist.map(i => i.sku).join(",");
       const productMap = new Map(state.products.map(p => [p.sku, p.title]));
+
       const items = state.shortlist.map((item, idx) => {
         const title = productMap.get(item.sku) || "Unknown Product";
         return `${idx + 1}. ${item.sku} - ${title}`;
       });
 
-      const link = `${location.origin}${location.pathname}?shortlist=${encodeURIComponent(skuList)}`;
+      const link = `${location.origin}${location.pathname}?${location.search.replace(/^\?/, "")}`;
 
-      const message = `Hi! Here's my shortlisted selection from Dhariwal Bags:\n\n` +
-                      items.join("\n") +
-                      `\n\nCheck them here: ${link}`;
+      const message =
+        `Hi! Here's a selection from Dhariwal Bags:\n\n` +
+        (items.length ? items.join("\n") + "\n\n" : "") +
+        `View here: ${link}`;
 
       const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(waUrl, "_blank");
@@ -275,13 +307,9 @@
     `;
   }
 
-  function renderBottomBar() {
-    const count = state.shortlist.length;
-    if (!count) {
-      els.bottomBar.classList.add("hidden");
-      return;
-    }
+  function renderBottomBar(){
     els.bottomBar.classList.remove("hidden");
+    const count = state.shortlist.length;
     els.selectedCount.textContent = `${count} selected`;
     els.waShareLink.href = buildMultiShare(state.shortlist);
   }
@@ -312,4 +340,6 @@
   function cssEscape(s) {
     return s.replace(/"/g, '\\"');
   }
+
+  window.openShortlistDrawer = openShortlistDrawer;
 })();

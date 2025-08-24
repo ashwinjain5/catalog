@@ -84,3 +84,41 @@ dialog { border: none; border-radius: 16px; padding: 0; width: 92vw; max-width: 
   border-radius: 8px;
   font-size: 14px;
 }
+
+.modal {
+  max-width: 500px;
+  width: 90%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.shortlist-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.shortlist-content .item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.shortlist-content .item button {
+  background: transparent;
+  color: red;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+

@@ -213,3 +213,13 @@
   function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
   function cssEscape(s){ return s.replace(/"/g, '\\"'); }
 })();
+
+
+
+
+  function applyAndRender(){
+    renderChips();
+    const filtered = applyFilters(state.products, state.filters);
+    renderList(filtered);
+    renderBottomBar();
+  }

@@ -23,10 +23,11 @@
 
   <div id="bottomBar" class="bottom-bar hidden">
     <span id="selectedCount">0 selected</span>
-    <a id="waShareLink" class="btn primary" href="#" target="_blank" rel="noopener">Share Filters on WhatsApp</a>
+    <button class="btn" onclick="openShortlistDrawer()">👜 View Shortlist</button>
+    <a id="waShareLink" class="btn primary" href="#" target="_blank" rel="noopener">Share Filters</a>
 <!--    <button id="shareFilterBtn" class="btn">Share filter</button>
     <button id="exportPdfBtn" class="btn">Export PDF</button> -->
-    <button id="shareShortlistBtn" class="btn">Share Selected on WhatsApp</button>
+    <button id="shareShortlistBtn" class="btn">Share Shortlisted</button>
   </div>
 
   <!-- Filters Drawer -->
@@ -58,6 +59,14 @@
         <button id="applyFiltersBtn" value="default" class="btn primary">Apply</button>
       </menu>
     </form>
+  </dialog>
+
+  <dialog id="shortlistDrawer" class="modal">
+    <div class="modal-header">
+      <h3>Shortlisted Items</h3>
+      <button class="btn close-btn" onclick="document.getElementById('shortlistDrawer').close()">×</button>
+    </div>
+    <div id="shortlistList" class="shortlist-content"></div>
   </dialog>
 
   <script src="./config.js"></script>
