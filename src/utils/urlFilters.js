@@ -11,7 +11,7 @@ function parseFiltersFromURL() {
       filters[key] = value === "1" ? 1 : undefined;
     } else if (key === "search") {
       filters[key] = value;
-    } else if (key === "shortlist") {
+    } else if (key === "shortlistOnly" || key === "shortlist") {
       filters.shortlistOnly = value.split(",");
     }
   }

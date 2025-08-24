@@ -1,6 +1,7 @@
 function applyFilters(products, f){
   const s = (f.search||'').toLowerCase();
   return products.filter(p=>{
+    if (f.shortlistOnly?.length && !f.shortlistOnly.includes(p.sku)) return false;
     if (f.inStock && !p.inStock) return false;
     if (f.category?.length && !f.category.includes(p.category||'')) return false;
     if (f.subCategory?.length && !f.subCategory.includes(p.subCategory||'')) return false;

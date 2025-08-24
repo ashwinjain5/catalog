@@ -54,10 +54,18 @@
     return await fetchProductsFromCSV(SHEET_CSV_URL);
   }
 
+  function getVisibleProducts() {
+    if (state.filters.shortlistOnly?.length) {
+      const shortlistSet = new Set(state.filters.shortlistOnly);
+      return state.products.filter(p => shortlistSet.has(p.sku));
+    }
+    return applyFilters(state.products, state.filters);
+  }
+
   function openShortlistDrawer() {
-  renderShortlistList();
-  shortlistDrawer.showModal();
-}
+    renderShortlistList();
+    shortlistDrawer.showModal();
+  }
 
   function renderShortlistList() {
     if (!state.shortlist.length) {
@@ -81,8 +89,27 @@
     state.shortlist = state.shortlist.filter(i => i.sku !== sku);
     renderShortlistList();
     renderBottomBar();
-    renderList(applyFilters(state.products, state.filters));
+    renderList(getVisibleProducts());
   }
+
+  window.shortlistAllVisible = function() {
+    const visible = getVisibleProducts();
+    const existingSkus = new Set(state.shortlist.map(i => i.sku));
+    const newItems = visible
+      .filter(p => !existingSkus.has(p.sku))
+      .map(p => ({ sku: p.sku }));
+
+    if (newItems.length === 0) {
+      alert("All visible products are already shortlisted.");
+      return;
+    }
+
+    state.shortlist = state.shortlist.concat(newItems);
+    renderBottomBar();
+    renderList(visible);
+    alert(`${newItems.length} products added to shortlist.`);
+  };
+
 
   function uniqueNonEmpty(arr) {
     return Array.from(new Set(arr.filter(Boolean))).sort((a, b) =>
@@ -157,20 +184,25 @@
     els.shareShortlistBtn = document.getElementById("shareShortlistBtn");
 
     els.shareShortlistBtn.addEventListener("click", () => {
-      const skus = state.shortlist.map(i => i.sku).join(",");
+      if (!state.shortlist.length) {
+        alert("No products shortlisted to share.");
+        return;
+      }
+
+      const skus = state.shortlist.map(i => i.sku);
+      const skuParam = encodeURIComponent(skus.join(","));
+      const link = `${location.origin}${location.pathname}?shortlistOnly=${skuParam}`;
+
       const productMap = new Map(state.products.map(p => [p.sku, p.title]));
-
-      const items = state.shortlist.map((item, idx) => {
-        const title = productMap.get(item.sku) || "Unknown Product";
-        return `${idx + 1}. ${item.sku} - ${title}`;
+      const items = skus.map((sku, idx) => {
+        const title = productMap.get(sku) || "Unknown Product";
+        return `${idx + 1}. ${sku} - ${title}`;
       });
-
-      const link = `${location.origin}${location.pathname}?${location.search.replace(/^\?/, "")}`;
 
       const message =
         `Hi! Here's a selection from Dhariwal Bags:\n\n` +
-        (items.length ? items.join("\n") + "\n\n" : "") +
-        `View here: ${link}`;
+        items.join("\n") +
+        `\n\nView here: ${link}`;
 
       const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(waUrl, "_blank");
@@ -227,14 +259,8 @@
 
   function applyAndRender() {
     renderChips();
-    let filtered;
-    if (state.filters.shortlistOnly) {
-      const shortlistSet = new Set(state.filters.shortlistOnly);
-      filtered = state.products.filter(p => shortlistSet.has(p.sku));
-    } else {
-      filtered = applyFilters(state.products, state.filters);
-    }
-    renderList(filtered);
+    const visible = getVisibleProducts();
+    renderList(visible);
     renderBottomBar();
   }
 
@@ -272,9 +298,19 @@
       els.catalogue.innerHTML = `<div class="meta" style="text-align:center;margin-top:24px;">No products match these filters.</div>`;
       return;
     }
-    els.catalogue.innerHTML = list
+
+    const shortlistAllBtnHTML = `
+      <div style="margin: 12px 0; text-align: right;">
+        <button class="btn" onclick="shortlistAllVisible()">Shortlist All</button>
+      </div>
+    `;
+
+    const productCardsHTML = list
       .map((p) => cardHTML(p, isSelected(p.sku)))
       .join("");
+
+    els.catalogue.innerHTML = shortlistAllBtnHTML + productCardsHTML;
+
     els.catalogue.querySelectorAll("[data-toggle]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         const sku = e.currentTarget.getAttribute("data-toggle");
@@ -342,4 +378,5 @@
   }
 
   window.openShortlistDrawer = openShortlistDrawer;
+  window.shortlistAllVisible = shortlistAllVisible;
 })();
