@@ -339,11 +339,19 @@
     `;
   }
 
-  function renderBottomBar(){
+  function renderBottomBar() {
     els.bottomBar.classList.remove("hidden");
+
     const count = state.shortlist.length;
-    els.selectedCount.textContent = `${count} selected`;
+
+    // removed line: els.selectedCount.textContent = `${count} selected`;
     els.waShareLink.href = buildMultiShare(state.shortlist);
+
+    // ✅ New line to update the count inside the View Shortlist button
+    const shortlistBtnCount = document.getElementById("shortlistCount");
+    if (shortlistBtnCount) {
+      shortlistBtnCount.textContent = count;
+    }
   }
 
   function isSelected(sku) {

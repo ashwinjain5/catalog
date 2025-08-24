@@ -122,3 +122,58 @@ dialog { border: none; border-radius: 16px; padding: 0; width: 92vw; max-width: 
   cursor: pointer;
 }
 
+#bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* vertical spacing between rows */
+  z-index: 1000;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* Row of two buttons */
+#bottomBar .bar-row {
+  display: flex;
+  gap: 8px; /* horizontal spacing between buttons */
+  width: 100%;
+}
+
+/* Button style */
+#bottomBar .btn {
+  flex: 1;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+  background-color: #fff;
+  color: #111;
+  border-radius: 8px; /* ✅ Curved corners */
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0;
+}
+
+/* Neon Borders */
+#bottomBar .neon-yellow { border-color: #ffff33; box-shadow: 0 0 4px #ffff33; }
+#bottomBar .neon-red    { border-color: #ff3131; box-shadow: 0 0 4px #ff3131; }
+#bottomBar .neon-purple { border-color: #d500f9; box-shadow: 0 0 4px #d500f9; }
+#bottomBar .neon-green  { border-color: #39ff14; box-shadow: 0 0 4px #39ff14; }
+
+/* Optional hover */
+#bottomBar .btn:hover {
+  background-color: #f9f9f9;
+}

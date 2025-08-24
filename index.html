@@ -23,14 +23,18 @@
   </main>
 
   <div id="bottomBar" class="bottom-bar hidden">
-    <span id="selectedCount">0 selected</span>
-    <button class="btn" onclick="openShortlistDrawer()">👜 View Shortlist</button>
-    <a id="waShareLink" class="btn primary" href="#" target="_blank" rel="noopener">Share Filters</a>
-<!--    <button id="shareFilterBtn" class="btn">Share filter</button>
-    <button id="exportPdfBtn" class="btn">Export PDF</button> -->
-    <button id="shareShortlistBtn" class="btn">Share Shortlisted</button>
-    <div style="margin-left:auto;">
-      <button class="btn primary" onclick="shortlistAllVisible()">Shortlist All</button>
+    <!-- Top Row -->
+    <div class="bar-row">
+      <button class="btn neon-yellow" onclick="shortlistAllVisible()">Shortlist All</button>
+      <button class="btn neon-red" onclick="openShortlistDrawer()">
+        View Shortlisted (<span id="shortlistCount">0</span>)
+      </button>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="bar-row">
+      <a id="waShareLink" class="btn neon-purple" href="#" target="_blank" rel="noopener">Share Filters</a>
+      <button id="shareShortlistBtn" class="btn neon-green">Share Shortlisted</button>
     </div>
   </div>
 
