@@ -1,19 +1,24 @@
-function parseFiltersFromURL(){
-  const p = new URLSearchParams(location.search);
-  const arr = k => (p.get(k)? p.get(k).split(',').filter(Boolean): undefined);
-  const num = k => (p.get(k)? Number(p.get(k)): undefined);
-  const bool = k => (p.get(k)? p.get(k)==='1' : undefined);
-  return {
-    category: arr('category'),
-    subCategory: arr('subCategory'),
-    brand: arr('brand'),
-    colors: arr('colors'),
-    price_gte: num('price_gte'),
-    price_lte: num('price_lte'),
-    inStock: bool('inStock'),
-    search: p.get('search') || undefined,
-  };
+function parseFiltersFromURL() {
+  const params = new URLSearchParams(location.search);
+  const filters = {};
+
+  for (const [key, value] of params.entries()) {
+    if (["category", "subCategory", "brand", "colors"].includes(key)) {
+      filters[key] = value.split(",");
+    } else if (["price_gte", "price_lte"].includes(key)) {
+      filters[key] = Number(value);
+    } else if (key === "inStock") {
+      filters[key] = value === "1" ? 1 : undefined;
+    } else if (key === "search") {
+      filters[key] = value;
+    } else if (key === "shortlist") {
+      filters.shortlistOnly = value.split(",");
+    }
+  }
+
+  return filters;
 }
+
 function setFiltersToURL(f){
   const p = new URLSearchParams();
   const setArr = (k, v)=> v&&v.length && p.set(k, v.join(','));

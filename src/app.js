@@ -10,8 +10,6 @@
     bottomBar: document.getElementById("bottomBar"),
     selectedCount: document.getElementById("selectedCount"),
     waShareLink: document.getElementById("waShareLink"),
-    shareFilterBtn: document.getElementById("shareFilterBtn"),
-    exportPdfBtn: document.getElementById("exportPdfBtn"),
     searchInput: document.getElementById("searchInput"),
     filtersBtn: document.getElementById("filtersBtn"),
     filtersDialog: document.getElementById("filtersDialog"),
@@ -124,6 +122,28 @@
     if (state.filters.inStock != null)
       els.filterInStock.checked = !!state.filters.inStock;
 
+    els.shareShortlistBtn = document.getElementById("shareShortlistBtn");
+
+    els.shareShortlistBtn.addEventListener("click", () => {
+      if (!state.shortlist.length) return;
+
+      const skuList = state.shortlist.map(i => i.sku).join(",");
+      const productMap = new Map(state.products.map(p => [p.sku, p.title]));
+      const items = state.shortlist.map((item, idx) => {
+        const title = productMap.get(item.sku) || "Unknown Product";
+        return `${idx + 1}. ${item.sku} - ${title}`;
+      });
+
+      const link = `${location.origin}${location.pathname}?shortlist=${encodeURIComponent(skuList)}`;
+
+      const message = `Hi! Here's my shortlisted selection from Dhariwal Bags:\n\n` +
+                      items.join("\n") +
+                      `\n\nCheck them here: ${link}`;
+
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, "_blank");
+    });
+
     els.searchInput.addEventListener("input", (e) => {
       state.filters.search = e.target.value || undefined;
       setFiltersToURL(state.filters);
@@ -171,22 +191,17 @@
       applyAndRender();
     });
 
-    els.shareFilterBtn.addEventListener("click", async () => {
-      const url = location.href;
-      try {
-        if (navigator.share) await navigator.share({ url });
-        else await navigator.clipboard.writeText(url);
-      } catch (e) {}
-    });
-
-    els.exportPdfBtn.addEventListener("click", () =>
-      exportVisibleAsPDF("catalogue")
-    );
   }
 
   function applyAndRender() {
     renderChips();
-    const filtered = applyFilters(state.products, state.filters);
+    let filtered;
+    if (state.filters.shortlistOnly) {
+      const shortlistSet = new Set(state.filters.shortlistOnly);
+      filtered = state.products.filter(p => shortlistSet.has(p.sku));
+    } else {
+      filtered = applyFilters(state.products, state.filters);
+    }
     renderList(filtered);
     renderBottomBar();
   }
@@ -213,7 +228,11 @@
         }</span>`
       );
     if (f.inStock) chips.push(`<span class="chip">inStock</span>`);
+    if (f.shortlistOnly?.length)
+    chips.push(`<span class="chip">Shortlist only: ${f.shortlistOnly.length} items</span>`);
+
     els.chips.innerHTML = chips.join("");
+
   }
 
   function renderList(list) {
