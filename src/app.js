@@ -299,17 +299,13 @@
       return;
     }
 
-    const shortlistAllBtnHTML = `
-      <div style="margin: 12px 0; text-align: right;">
-        <button class="btn" onclick="shortlistAllVisible()">Shortlist All</button>
-      </div>
-    `;
+
 
     const productCardsHTML = list
       .map((p) => cardHTML(p, isSelected(p.sku)))
       .join("");
 
-    els.catalogue.innerHTML = shortlistAllBtnHTML + productCardsHTML;
+    els.catalogue.innerHTML = productCardsHTML;
 
     els.catalogue.querySelectorAll("[data-toggle]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
