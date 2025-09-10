@@ -299,13 +299,21 @@
       return;
     }
 
-
-
     const productCardsHTML = list
       .map((p) => cardHTML(p, isSelected(p.sku)))
       .join("");
 
     els.catalogue.innerHTML = productCardsHTML;
+
+    // Attach click handlers to product card images for image modal
+    els.catalogue.querySelectorAll(".card img").forEach(img => {
+      img.addEventListener("click", (e) => {
+        const modal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImage");
+        modalImg.src = e.currentTarget.src;
+        modal.showModal();
+      });
+    });
 
     els.catalogue.querySelectorAll("[data-toggle]").forEach((btn) => {
       btn.addEventListener("click", (e) => {

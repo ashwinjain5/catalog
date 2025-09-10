@@ -94,6 +94,16 @@ dialog { border: none; border-radius: 16px; padding: 0; width: 92vw; max-width: 
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
+.image-modal img {
+  width: 100%;
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+  margin: auto;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;

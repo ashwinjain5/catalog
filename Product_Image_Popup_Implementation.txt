@@ -1,0 +1,61 @@
+Feature: Product Image Pop-up on Click
+======================================
+
+Requirement
+-----------
+When a user clicks on a product tile image, a pop-up should open showing the complete product image. 
+The pop-up must include a close ('X') button at the top-right corner to dismiss the image view.
+
+Analysis
+--------
+- The current project stack is plain vanilla JavaScript, HTML, and CSS.
+- The app already uses <dialog> elements for Filters and Shortlist, which can be reused for an image viewer.
+- CSS has modal styling (.modal), which can be extended for image modal.
+- Product cards are rendered in app.js using cardHTML(). Images are displayed but do not yet have click handlers.
+
+Implementation Plan
+-------------------
+
+1. HTML
+   - Add a new <dialog> for image viewing in index.html:
+     <dialog id="imageModal" class="modal image-modal">
+       <div class="modal-header">
+         <button class="btn close-btn" onclick="document.getElementById('imageModal').close()">×</button>
+       </div>
+       <img id="modalImage" src="" alt="Product Image" />
+     </dialog>
+
+2. CSS
+   - Extend styles.css with new .image-modal styles:
+     .image-modal img {
+       width: 100%;
+       max-width: 90vw;
+       max-height: 80vh;
+       object-fit: contain;
+       border-radius: 12px;
+       display: block;
+       margin: auto;
+     }
+
+3. JavaScript
+   - In app.js, update renderList() to attach click handlers to card images:
+     els.catalogue.querySelectorAll(".card img").forEach(img => {
+       img.addEventListener("click", (e) => {
+         const modal = document.getElementById("imageModal");
+         const modalImg = document.getElementById("modalImage");
+         modalImg.src = e.currentTarget.src;
+         modal.showModal();
+       });
+     });
+
+4. Scripts to Update
+   - index.html: Add new <dialog> block for image modal.
+   - styles.css: Add .image-modal CSS rules.
+   - app.js: Modify renderList() to attach image click listeners.
+
+Impact
+------
+- UX: Users can view full product images without leaving the catalogue page.
+- Performance: Minimal impact, since the same image URL is reused.
+- Maintainability: Low complexity; reuses existing modal pattern.
+
