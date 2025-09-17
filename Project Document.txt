@@ -1,3 +1,16 @@
+About Project:
+This project is related to catalog sharing and shortlisting.
+How it works as of 17-Sep-2025 (only requirement portal, wholesale portal etc have been prepared until this date):
+1. Add projects with image URLs and prices in the google sheet.
+2. That sheet is broadcasted to public as JSON File
+3. That JSON data is picked by the github pages server and showcased in frontend through this project repository.
+
+Future Updates:
+- Google sheet columns to be made in sync with standard Product/items table
+- Each stakeholder to have their own catalog page vis-a-vis Kishore Mama, Gautam Mama, Amith Bhaiya, Dhariwal Retail etc.
+
+
+
 Project Email: rashwinjain5@gmail.com
 
 Project Host: Github Pages: https://ashwinjain5.github.io/catalog/
@@ -10,4 +23,6 @@ Local Folder in Ashwin's laptop: D:\catalogue-portal
 
 Source Excel File: https://docs.google.com/spreadsheets/d/1nwDhisah8ujwWgflwDm4K3RPLlTuAN3CxE37QSOYH-o/edit?usp=sharing
 (under rashwinjain5@gmail.com)
+
+
 
