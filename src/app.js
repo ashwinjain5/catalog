@@ -2,7 +2,7 @@
   const state = {
     products: [],
     filters: parseFiltersFromURL(),
-    shortlist: [],
+  shortlist: [],
   };
 
   const els = {
@@ -33,6 +33,12 @@
     try {
       const items = await loadProducts();
       state.products = items;
+      // If URL contained a shortlist with quantities, restore it into state.shortlist
+      if (state.filters.shortlist && state.filters.shortlist.length) {
+        state.shortlist = state.filters.shortlist.map(i => ({ sku: i.sku, qty: Number(i.qty || 1) }));
+  // Also populate filters.shortlistOnly so getVisibleProducts can filter by these SKUs
+  state.filters.shortlistOnly = state.shortlist.map(i => i.sku);
+      }
       populateDropdowns();
       bindUI();
       applyAndRender();
@@ -78,7 +84,7 @@
       const title = productMap.get(item.sku) || "Unknown Product";
       return `
         <div class="item">
-          <span>${i + 1}. ${item.sku} - ${title}</span>
+          <span>${i + 1}. ${item.sku} - ${title} ${item.qty ? `x ${item.qty}` : ''}</span>
           <button onclick="removeFromShortlist('${item.sku}')">✖</button>
         </div>
       `;
@@ -97,7 +103,7 @@
     const existingSkus = new Set(state.shortlist.map(i => i.sku));
     const newItems = visible
       .filter(p => !existingSkus.has(p.sku))
-      .map(p => ({ sku: p.sku }));
+  .map(p => ({ sku: p.sku, qty: 1 }));
 
     if (newItems.length === 0) {
       alert("All visible products are already shortlisted.");
@@ -189,14 +195,14 @@
         return;
       }
 
-      const skus = state.shortlist.map(i => i.sku);
-      const skuParam = encodeURIComponent(skus.join(","));
-      const link = `${location.origin}${location.pathname}?shortlistOnly=${skuParam}`;
+  const pairs = state.shortlist.map(i => `${i.sku}:${i.qty||1}`);
+  const skuParam = encodeURIComponent(pairs.join(","));
+  const link = `${location.origin}${location.pathname}?shortlist=${skuParam}`;
 
       const productMap = new Map(state.products.map(p => [p.sku, p.title]));
-      const items = skus.map((sku, idx) => {
-        const title = productMap.get(sku) || "Unknown Product";
-        return `${idx + 1}. ${sku} - ${title}`;
+      const items = state.shortlist.map((it, idx) => {
+        const title = productMap.get(it.sku) || "Unknown Product";
+        return `${idx + 1}. ${it.sku} - ${title} ${it.qty?`x ${it.qty}`:''}`;
       });
 
       const message =
@@ -331,6 +337,7 @@
       : `<div style="height:220px;background:#f3f4f6;border-radius:12px;"></div>`;
     const stockClass = p.inStock ? "in" : "out";
     const stockText = p.inStock ? "In stock" : "Out of stock";
+    const qty = (state.shortlist.find(i => i.sku === p.sku)?.qty) || 1;
     return `
       <article class="card">
         ${img}
@@ -340,9 +347,12 @@
     )}</div>
         <div class="price">₹${Number(p.price || 0)}</div>
         <div class="stock ${stockClass}">${stockText}</div>
-        <button class="btn ${selected ? "primary" : ""}" data-toggle="${escapeHtml(
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn ${selected ? "primary" : ""}" data-toggle="${escapeHtml(
       p.sku
     )}">${selected ? "Remove from shortlist" : "Add to shortlist"}</button>
+          ${selected ? `<input type="number" min="0" class="qty-input" value="${qty}" onchange="updateQty('${p.sku}', this.value)" />` : ""}
+        </div>
       </article>
     `;
   }
@@ -354,6 +364,10 @@
 
     // removed line: els.selectedCount.textContent = `${count} selected`;
     els.waShareLink.href = buildMultiShare(state.shortlist);
+    // Update URL to include shortlist with quantities so the canonical link can be copied/shared
+    try {
+      setFiltersToURL(Object.assign({}, state.filters, { shortlist: state.shortlist }));
+    } catch (e) { /* ignore if setFiltersToURL not available */ }
 
     // ✅ New line to update the count inside the View Shortlist button
     const shortlistBtnCount = document.getElementById("shortlistCount");
@@ -369,14 +383,26 @@
   function toggleSelect(sku) {
     if (isSelected(sku))
       state.shortlist = state.shortlist.filter((i) => i.sku !== sku);
-    else state.shortlist = state.shortlist.concat({ sku });
+    else state.shortlist = state.shortlist.concat({ sku, qty: 1 });
     renderBottomBar();
-    const btn = document.querySelector(`[data-toggle="${cssEscape(sku)}"]`);
-    if (btn) btn.classList.toggle("primary");
-    if (btn)
-      btn.textContent = isSelected(sku)
-        ? "Remove from shortlist"
-        : "Add to shortlist";
+    // Re-render visible list to update button text and qty input
+    renderList(getVisibleProducts());
+  }
+
+  // Update quantity for a shortlisted SKU. If qty <= 0 remove item from shortlist.
+  window.updateQty = function(sku, value) {
+    const q = Number(value);
+    const idx = state.shortlist.findIndex(i => i.sku === sku);
+    if (idx === -1) return;
+    if (!isFinite(q) || q <= 0) {
+      // remove item when quantity is zero or invalid
+      state.shortlist.splice(idx, 1);
+    } else {
+      state.shortlist[idx].qty = Math.floor(q);
+    }
+    renderShortlistList();
+    renderBottomBar();
+    renderList(getVisibleProducts());
   }
 
   function escapeHtml(s) {

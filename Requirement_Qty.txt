@@ -1,0 +1,149 @@
+Here’s a structured summary and implementation plan tailored for your current Catalogue Portal stack:
+
+---
+
+## ✅ REQUIREMENT SUMMARY
+
+### Primary Goals:
+
+1. **Add a quantity field** beside the "Add to Shortlist" button on each product card (inline input).
+2. **Track quantity per shortlisted SKU** in the internal state.
+3. **Update the canonical/shared URL** to include both:
+
+   * The shortlisted SKUs
+   * The corresponding quantities
+4. **Reflect quantities in:**
+
+   * WhatsApp message body
+   * Shortlist drawer view
+   * Canonical link (with qty encoding)
+
+---
+
+## ⚙️ APPROACH TO IMPLEMENT – FRONTEND LOGIC
+
+### 1. **Extend Shortlist Data Structure**
+
+Change from:
+
+```js
+{ sku: "BP-306" }
+```
+
+To:
+
+```js
+{ sku: "BP-306", qty: 1 }
+```
+
+* Initialize `qty = 1` when first added.
+* Allow updates via inline number input.
+* Persist updates in `state.shortlist`.
+
+---
+
+### 2. **Render Inline Quantity Input on Product Card**
+
+Under each “Add to Shortlist” button:
+
+* If product is shortlisted → show input field prefilled with `qty`.
+* Else → hide or disable the quantity input.
+
+In `cardHTML(p, selected)`:
+
+```html
+${selected ? `<input type="number" class="qty-input" min="0" value="${qty}" onchange="updateQty('${p.sku}', this.value)" />` : ''}
+```
+
+Bind handler:
+
+```js
+window.updateQty = function(sku, qty) {
+  const item = state.shortlist.find(i => i.sku === sku);
+  if (item) item.qty = Math.max(0, parseInt(qty) || 0);
+}
+```
+
+---
+
+### 3. **Update Shortlist Modal Display**
+
+In `renderShortlistList()`:
+
+* Add `x qty` display beside title.
+
+```js
+<span>${i + 1}. ${item.sku} - ${title} ${item.qty ? `x ${item.qty}` : ''}</span>
+```
+
+---
+
+### 4. **Update WhatsApp Share Logic**
+
+In `whatsapp.js → buildMultiShare()`:
+
+* Already supports `i.qty`; ensure default is `0` or `1` if missing.
+
+---
+
+### 5. **Generate Canonical Link with Quantities**
+
+Modify current:
+
+```
+?shortlistOnly=BP-306,BP-212
+```
+
+To:
+
+```
+?shortlist=BP-306:2,BP-212:5
+```
+
+#### `setFiltersToURL()` – Update:
+
+```js
+if (f.shortlistOnly?.length) {
+  const encoded = f.shortlistOnly.map(i => `${i.sku}:${i.qty || 0}`);
+  p.set('shortlist', encoded.join(','));
+}
+```
+
+#### `parseFiltersFromURL()` – Update:
+
+```js
+else if (key === "shortlist") {
+  filters.shortlistOnly = value.split(',').map(pair => {
+    const [sku, qty] = pair.split(':');
+    return { sku, qty: Number(qty || 0) };
+  });
+}
+```
+
+---
+
+## 🧩 ALIGNMENT WITH EXISTING STACK
+
+### Fully Compatible:
+
+* **Stateful shortlist** already used → just extend schema
+* **Modular UI rendering** → easy to conditionally show quantity input
+* **Dynamic WA links** → flexible to adapt with updated message + link
+* **Vanilla JS** (no frameworks) → direct DOM injection works cleanly
+* **CSV-driven product load** → no backend dependency change needed
+
+---
+
+## ✅ Summary: Deliverables to Update
+
+| File            | Purpose                           | Changes Required                                   |
+| --------------- | --------------------------------- | -------------------------------------------------- |
+| `app.js`        | Core logic, rendering, state mgmt | Shortlist structure, input binders, render updates |
+| `index.html`    | Base layout                       | No direct changes (unless testing)                 |
+| `styles.css`    | Inline quantity input style       | Reuse `.qty-input` or extend                       |
+| `whatsapp.js`   | Share link builder                | Already compatible with `i.qty`                    |
+| `urlFilters.js` | URL encoding/decoding             | Handle `shortlist=SKU:qty,...`                     |
+
+---
+
+Ready to implement inline quantity support per card and update the shortlist/share logic accordingly. Confirm if you'd like me to proceed with the full code changes now.

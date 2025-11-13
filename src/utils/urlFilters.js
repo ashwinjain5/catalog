@@ -11,8 +11,15 @@ function parseFiltersFromURL() {
       filters[key] = value === "1" ? 1 : undefined;
     } else if (key === "search") {
       filters[key] = value;
-    } else if (key === "shortlistOnly" || key === "shortlist") {
+    } else if (key === "shortlistOnly") {
+      // legacy param without quantities
       filters.shortlistOnly = value.split(",");
+    } else if (key === "shortlist") {
+      // expected format: SKU:qty,SKU2:qty2
+      filters.shortlist = value.split(",").map(pair => {
+        const [sku, qty] = pair.split(":");
+        return { sku, qty: Number(qty || 1) };
+      });
     }
   }
 
@@ -30,5 +37,10 @@ function setFiltersToURL(f){
   setArr('subCategory', f.subCategory);
   setArr('brand', f.brand);
   setArr('colors', f.colors);
+  // optional: include shortlist (sku:qty) when present on filters object
+  if (f.shortlist && f.shortlist.length) {
+    const encoded = f.shortlist.map(i => `${i.sku}:${i.qty||1}`).join(',');
+    p.set('shortlist', encoded);
+  }
   history.replaceState(null,'',`?${p.toString()}`);
 }
