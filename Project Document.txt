@@ -25,6 +25,87 @@ Source Excel File: https://docs.google.com/spreadsheets/d/1nwDhisah8ujwWgflwDm4K
 (under rashwinjain5@gmail.com)
 
 
+Quantity feature (implemented Nov 2025)
+-------------------------------------
+
+Overview
+--------
+An inline quantity field was added to the catalogue shortlist functionality. Each shortlisted SKU now carries an integer quantity (default 1). Users can edit the quantity directly on the product card while the item is shortlisted. Setting quantity to 0 removes the item from the shortlist. The shortlist (with quantities) is encoded into the page URL and included in WhatsApp share messages and the shortlist drawer.
+
+Purpose
+-------
+- Allow stakeholders to shortlist items with desired quantities for ordering or quoting.
+- Make shared shortlist links and WhatsApp messages carry quantity information so receivers see exact counts.
+
+Files changed
+-------------
+- `src/app.js`
+	- Restores `state.shortlist` from URL's `shortlist` param on init (if present).
+	- Adds `qty` to shortlist items when added (default 1).
+	- Renders an inline `<input type="number" class="qty-input">` beside the shortlist toggle on product cards for shortlisted items.
+	- Adds global `window.updateQty(sku, value)` handler to update quantity or remove item when set to 0.
+	- Updates `shortlistAllVisible()` to add items with qty 1.
+	- Updates `renderShortlistList()` to show `x N` next to each shortlisted item.
+	- Updates share button code to generate `?shortlist=SKU:qty,SKU2:qty2` links and include quantities in message body.
+	- `renderBottomBar()` writes current shortlist into URL (via `setFiltersToURL`) so the canonical URL reflects quantities.
+
+- `src/utils/urlFilters.js`
+	- `parseFiltersFromURL()` now parses `shortlist=SKU:qty,...` pairs into `filters.shortlist` array of {sku, qty}.
+	- `setFiltersToURL()` writes `shortlist=SKU:qty,...` when `f.shortlist` is present.
+	- Legacy `shortlistOnly` param is still supported (comma-separated SKUs with no quantities).
+
+- `src/utils/whatsapp.js`
+	- `buildMultiShare(selected)` updated to include quantities in the message and to generate a view link with `?shortlist=...` pairs.
+
+- `styles.css`
+	- The `.qty-input` class exists and provides minimal styling for the inline quantity input.
+
+Data flow and URL format
+------------------------
+- When the user adds items to the shortlist, `state.shortlist` contains objects: `{ sku: "BP-306", qty: 1 }`.
+- When the shortlist changes, `renderBottomBar()` calls `setFiltersToURL({...state.filters, shortlist: state.shortlist})` which updates the browser URL to include `?shortlist=BP-306:1,BP-212:5`.
+- When the page loads, `parseFiltersFromURL()` reads `shortlist` and `init()` restores `state.shortlist` and `state.filters.shortlistOnly` so UI and visibility reflect the URL.
+
+WhatsApp sharing
+----------------
+- The share flow uses the shortlist with qtys to build a plain text message like:
+
+	Dhariwal Shortlist:
+	• BP-306 x 2
+	• BP-212 x 5
+
+	View: https://.../catalog/?shortlist=BP-306:2,BP-212:5
+
+- WhatsApp link uses `https://wa.me/?text=` with the encoded body.
+
+UX decisions and edge cases
+--------------------------
+- Quantity default: 1 when an item is first shortlisted.
+- If user sets quantity <= 0 (including 0 or non-numeric), the item is removed from shortlist automatically.
+- Quantities are stored as integers (floored) using `Math.floor` semantics when parsing input.
+- The implementation does not persist shortlist across browser sessions (no localStorage yet) — this can be added later.
+- CSV parsing and product ingestion are unchanged.
+
+Manual test checklist
+---------------------
+1. Add a product to shortlist — inline qty input should appear with value 1.
+2. Change qty to 5 — shortlist drawer should show `x 5`, share message should include `x 5`, URL should include `SKU:5`.
+3. Change qty to 0 — item should be removed from shortlist.
+4. Click `Shortlist all visible` — items are added with qty 1.
+5. Load a URL with `?shortlist=SKU:qty,...` — page should show those items selected with correct qtys.
+
+Developer notes / next improvements
+----------------------------------
+- Consider adding localStorage persistence for `state.shortlist` so selections survive page reloads.
+- Consider using PapaParse for robust CSV parsing if sheet fields may contain commas or quoted values.
+- Consider adding a user confirmation when a user sets quantity to 0 (optional) instead of immediate removal.
+
+Popup behavior update (Nov 2025)
+--------------------------------
+All modal dialogs (`filtersDialog`, `imageModal`, `shortlistDrawer`) now close when the user clicks outside the dialog content area (backdrop click). This improves UX on mobile and desktop. Implementation detail: a small helper in `src/app.js` attaches a click listener to each dialog and calls `.close()` when the click target is the dialog element itself.
+
+
+
 
 
 

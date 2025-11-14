@@ -261,6 +261,22 @@
       applyAndRender();
     });
 
+    // Make dialogs close when clicking outside the dialog content
+    makeDialogCloseOnOutsideClick(els.filtersDialog);
+    makeDialogCloseOnOutsideClick(document.getElementById('imageModal'));
+    makeDialogCloseOnOutsideClick(els.shortlistDrawer);
+
+
+  // Utility: when a <dialog> is open, clicking on backdrop (outside its first child) will close it.
+  function makeDialogCloseOnOutsideClick(dialog) {
+    if (!dialog) return;
+    dialog.addEventListener('click', (e) => {
+      // When the clicked target is the dialog itself (backdrop), close it.
+      if (e.target === dialog) {
+        try { dialog.close(); } catch (err) { /* ignore */ }
+      }
+    });
+  }
   }
 
   function applyAndRender() {
